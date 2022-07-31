@@ -29,6 +29,7 @@ export default {
       },
       isLoaded: false,
       selfContext: null,
+      imgUrl: require('./assets/hey.png'),
       imgUrl2: 'https://ik.imagekit.io/checkmyfreakyimage/checkit_0JkQOOBv8'
     }
   },
@@ -75,17 +76,39 @@ export default {
       const fast = new FastAverageColor()
       const color = fast.getColor(this.$refs.tmp)
       this.generateGradient(color)
+      this.addCheckitLogo()
       return color
     },
-    generateGradient() {
+    generateGradient({hex}) {
       let superctx = this.$refs.drawer.getContext('2d').createLinearGradient(0,0,0,800);
       window.superctx = superctx
-      superctx.addColorStop(0, 'transparent');
-      superctx.addColorStop(1, 'transparent');
+      superctx.addColorStop(0, hex);
+      superctx.addColorStop(1, '#2f3136');
 
       // Fill with gradient
       this.selfContext.fillStyle = superctx;
       this.selfContext.fillRect(0,0,this.canvasSize.w,this.canvasSize.h);
+    },
+    addCheckitLogo() {
+      const ctx = this.$refs.drawer.getContext('2d')
+
+      const img =  new Image()
+      img.src = this.imgUrl
+      img.crossOrigin = 'Anonymous'
+      img.onload = () => {
+        const {
+          leftPos,
+          topPos
+        } = this.getCanvasContentPosition(img)
+        ctx.drawImage(
+          img,
+          leftPos,
+          topPos,
+          42,
+          42
+        )
+      }
+
     },
     async downloadSnapshot() {
       const dataUrl = await this.$refs.drawer.toDataURL()

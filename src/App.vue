@@ -1,29 +1,35 @@
 <template>
   <div id="app">
-    <button>
-      Share on Instagram bro !
-    </button>
+    <img ref="tmp" :src="imgUrl2" alt="" @load="getAverageColor">
+      <button @click="downloadSnapshot">
+        Share on Instagram bro !
+      </button>
     <canvas ref="drawer" id="el-canvaso"></canvas>
   </div>
 </template>
 
 <script>
+import {FastAverageColor} from 'fast-average-color'
+
 export default {
   name: 'App',
   async mounted() {
+    this.$refs.drawer.width = this.canvasSize.w
+    this.$refs.drawer.height = this.canvasSize.h
+    this.$refs.tmp.crossOrigin = 'Anonymous'
     this.selfContext = this.$refs.drawer.getContext('2d')
 
-    this.generateImg()
-    this.addBackground()
+    await this.generateImg()
   },
-  data() {
+  data() { 
     return {
       canvasSize: {
         w: 415, 
-        l: 890
+        h: 890
       },
+      isLoaded: false,
       selfContext: null,
-      imgUrl: 'https://media-private.canva.com/mo_Uw/MAE9WDmo_Uw/1/s3.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJWF6QO3UH4PAAJ6Q%2F20220731%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20220731T001536Z&X-Amz-Expires=62356&X-Amz-Signature=214c4fb3547389778d1cf0b34bcb45030b31edd4209c139240f3b6d87abb3689&X-Amz-SignedHeaders=host&response-expires=Sun%2C%2031%20Jul%202022%2017%3A34%3A52%20GMT'
+      imgUrl2: 'https://ik.imagekit.io/checkmyfreakyimage/checkit_0JkQOOBv8'
     }
   },
   computed: {
@@ -32,15 +38,47 @@ export default {
     }
   },
   methods: {
-    generateImg() {
+    async generateImg() {
       const img =  new Image()
-      img.src = this.imgUrl
+      img.src = this.imgUrl2
       img.onload = () => {
-        this.selfContext.drawImage(img, 0, 0)
+        this.selfContext.drawImage(img, 59, 152, 313, 313)
       }
     },
-    addBackground() {
+    getAverageColor() {
+      const fast = new FastAverageColor()
+      const color = fast.getColor(this.$refs.tmp)
+      this.generateGradient(color)
+      return color
+    },
+    generateGradient({hex}) {
+      let superctx = this.$refs.drawer.getContext('2d').createLinearGradient(0,0,0,800);
+      window.superctx = superctx
+      superctx.addColorStop(0, hex);
+      superctx.addColorStop(1, '#2f3136');
 
+      // Fill with gradient
+      this.selfContext.fillStyle = superctx;
+      this.selfContext.fillRect(0,0,this.canvasSize.w,this.canvasSize.h);
+    },
+    async downloadSnapshot() {
+      const dataUrl = await this.$refs.drawer.toDataURL()
+      console.log(dataUrl)
+      const blob = await (await fetch(dataUrl)).blob();
+      const filesArray = [
+        new File(
+          [blob],
+          'animation.png',
+          {
+            type: blob.type,
+            lastModified: new Date().getTime()
+          }
+        )
+      ];
+      const shareData = {
+        files: filesArray,
+      };
+      navigator.share(shareData);
     }
   }
 }
@@ -56,13 +94,4 @@ export default {
   margin-top: 60px;
  }
 
-#el-canvaso {
-    width: 100%;
-    height: 100%;
-  }
-
-  img {
-    width: 179px;
-    height: 200px;
-  }
 </style>

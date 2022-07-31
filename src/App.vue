@@ -41,6 +41,7 @@ export default {
     async generateImg() {
       const img =  new Image()
       img.src = this.imgUrl2
+      img.crossOrigin = 'Anonymous'
       img.onload = () => {
         this.selfContext.drawImage(img, 59, 152, 313, 313)
       }
